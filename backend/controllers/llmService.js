@@ -13,18 +13,29 @@ const client = new OpenAI({
 // Modelo de ejemplo disponible en Inference Providers
 const MODEL = "moonshotai/Kimi-K2-Instruct-0905";
 
-const getLLMResponse = async ({ message, userId, style }) => {
+const toneMap = {
+  neutral: "Responde de forma clara y equilibrada.",
+  friendly: "Responde de forma cercana y amigable.",
+  professional: "Responde de forma profesional y técnica.",
+};
+
+const getLLMResponse = async ({ message, userId, style, history = [] }) => {
   try {
     console.log("Mensaje enviado:", message);
 
+    const toneInstruction = toneMap[style?.tone] || toneMap.neutral;
+
+    const systemPrompt = `Eres NeburIA, un asistente inteligente y útil. ${toneInstruction}`;
+
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...history,
+      { role: "user", content: message }
+    ];
+
     const completion = await client.chat.completions.create({
       model: MODEL,
-      messages: [
-        {
-          role: "user",
-          content: message,
-        },
-      ],
+      messages: messages,
       // Opcional: puedes controlar parámetros como temperatura
       temperature: 0.7,
       max_tokens: 200,
